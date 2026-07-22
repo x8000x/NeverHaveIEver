@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Never Have I Ever</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap');
+
+  :root{
+    --ink: #f6efe8;
+    --ink-dim: #cdb8d8;
+    --bg-1: #1c1030;
+    --bg-2: #2a1745;
+    --pink: #ff4d94;
+    --pink-deep: #e0397f;
+    --gold: #ffc857;
+    --purple-card: #33194f;
+    --purple-line: rgba(255,255,255,0.09);
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin:0;
+    padding:0;
+    min-height:100%;
+    background: transparent;
+  }
+
+  body{
+    font-family: 'Manrope', sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow-x:hidden;
+    position:relative;
+  }
+
+  .stage{
+    width:100%;
+    max-width: 520px;
+    padding: 28px 20px 34px;
+    position:relative;
+    z-index:2;
+  }
+
+  /* Ambient confetti dots, fixed, decorative */
+  .confetti{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:0;
+    overflow:hidden;
+  }
+  .confetti span{
+    position:absolute;
+    border-radius:2px;
+    opacity:0.55;
+    animation: drift 14s linear infinite;
+  }
+
+  @keyframes drift{
+    0%{ transform: translateY(-10vh) rotate(0deg); }
+    100%{ transform: translateY(110vh) rotate(240deg); }
+  }
+
+  .brand{
+    text-align:center;
+    margin-bottom: 22px;
+  }
+  .brand .eyebrow{
+    font-family:'Manrope';
+    letter-spacing:0.32em;
+    text-transform:uppercase;
+    font-size:11px;
+    color: var(--gold);
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  .brand h1{
+    font-family:'Baloo 2', sans-serif;
+    font-size: 34px;
+    line-height:1;
+    margin:0;
+    font-weight:800;
+    letter-spacing: 0.5px;
+  }
+  .brand h1 .accent{ color: var(--pink); }
+
+  /* Card stack signature element */
+  .deck{
+    position:relative;
+    height: 280px;
+    margin: 6px 0 22px;
+  }
+  .stack-card{
+    position:absolute;
+    inset:0;
+    border-radius: 24px;
+    background: linear-gradient(160deg, #3a1f5c, #26123f);
+    border: 1px solid var(--purple-line);
+  }
+  .stack-card.s1{ transform: rotate(-6deg) translateY(10px); opacity:0.55; }
+  .stack-card.s2{ transform: rotate(5deg) translateY(6px); opacity:0.75; }
+
+  .card{
+    position:absolute;
+    inset:0;
+    border-radius: 24px;
+    background: linear-gradient(155deg, var(--purple-card), #24123c 78%);
+    border: 1px solid rgba(255,255,255,0.14);
+    box-shadow: 0 24px 50px -18px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02) inset;
+    padding: 26px 26px 22px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    transition: transform 0.42s cubic-bezier(.2,.8,.2,1), opacity 0.42s ease;
+  }
+
+  .card.exit-next{
+    transform: translateX(-130%) rotate(-10deg);
+    opacity:0;
+  }
+  .card.exit-pass{
+    transform: translateY(120%) rotate(4deg) scale(0.92);
+    opacity:0;
+  }
+  .card.enter{
+    animation: cardIn 0.46s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes cardIn{
+    from{ transform: translateY(18px) scale(0.97); opacity:0; }
+    to{ transform: translateY(0) scale(1); opacity:1; }
+  }
+
+  .card-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .category-pill{
+    font-size: 11px;
+    font-weight:700;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.08);
+    color: var(--gold);
+    border: 1px solid rgba(255,200,87,0.35);
+  }
+  .counter{
+    font-size:12px;
+    color: var(--ink-dim);
+    font-weight:600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .question-wrap{
+    flex:1;
+    display:flex;
+    align-items:center;
+    padding: 18px 2px;
+  }
+  .prompt-lead{
+    font-family:'Baloo 2';
+    font-size: 15px;
+    color: var(--pink);
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    display:block;
+    margin-bottom:8px;
+  }
+  .question-text{
+    font-family:'Baloo 2', sans-serif;
+    font-size: clamp(22px, 6vw, 28px);
+    line-height:1.28;
+    font-weight:700;
+    color: var(--ink);
+  }
+
+  .card-bottom .hint{
+    font-size:12px;
+    color: var(--ink-dim);
+    text-align:center;
+  }
+
+  .controls{
+    display:grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 12px;
+    margin-top: 18px;
+  }
+
+  button{
+    font-family:'Manrope';
+    font-weight:700;
+    font-size: 15px;
+    border-radius: 16px;
+    border: none;
+    padding: 16px 14px;
+    cursor:pointer;
+    transition: transform 0.15s ease, filter 0.15s ease;
+    letter-spacing:0.01em;
+  }
+  button:active{ transform: scale(0.96); }
+  button:focus-visible{
+    outline: 3px solid var(--gold);
+    outline-offset: 2px;
+  }
+
+  .btn-pass{
+    background: transparent;
+    color: var(--ink);
+    border: 1.5px solid rgba(255,255,255,0.25);
+  }
+  .btn-pass:hover{ background: rgba(255,255,255,0.06); }
+
+  .btn-next{
+    background: linear-gradient(120deg, var(--pink), var(--pink-deep));
+    color: #2a0f1e;
+    box-shadow: 0 10px 24px -8px rgba(255,77,148,0.55);
+  }
+  .btn-next:hover{ filter: brightness(1.06); }
+
+  .btn-icon{ font-size:16px; margin-right:6px; vertical-align:-2px; }
+
+  .progress-row{
+    margin-top: 18px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .progress-track{
+    flex:1;
+    height:6px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.08);
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    background: linear-gradient(90deg, var(--gold), var(--pink));
+    border-radius: 999px;
+    transition: width 0.4s ease;
+    width:0%;
+  }
+  .progress-label{
+    font-size:11px;
+    color: var(--ink-dim);
+    font-weight:600;
+    white-space:nowrap;
+  }
+
+  .reset-row{
+    text-align:center;
+    margin-top:14px;
+  }
+  .reset-link{
+    background:none;
+    border:none;
+    color: var(--ink-dim);
+    font-size:12px;
+    text-decoration:underline;
+    cursor:pointer;
+    padding:6px;
+  }
+  .reset-link:hover{ color: var(--ink); }
+
+  .empty-state{
+    text-align:center;
+    padding: 10px 6px;
+  }
+  .empty-state .question-text{ font-size:22px; }
+
+  @media (prefers-reduced-motion: reduce){
+    .card, .confetti span{ animation:none !important; transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="confetti" id="confetti"></div>
+
+<div class="stage">
+  <div class="brand">
+    <div class="eyebrow">The Party Game</div>
+    <h1>Never Have I <span class="accent">Ever</span></h1>
+  </div>
+
+  <div class="deck">
+    <div class="stack-card s1"></div>
+    <div class="stack-card s2"></div>
+    <div class="card" id="card">
+      <div class="card-top">
+        <span class="category-pill" id="category">Category</span>
+        <span class="counter" id="counter">0 / 0</span>
+      </div>
+      <div class="question-wrap">
+        <div>
+          <span class="prompt-lead">Never have I ever</span>
+          <div class="question-text" id="question">Loading question…</div>
+        </div>
+      </div>
+      <div class="card-bottom">
+        <div class="hint" id="hint">Done it? Sip up. Pass if it's not for you.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn-pass" id="passBtn"><span class="btn-icon">↻</span>Pass</button>
+    <button class="btn-next" id="nextBtn"><span class="btn-icon">🍹</span>Sip &amp; Next</button>
+  </div>
+
+  <div class="progress-row">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">0 asked</div>
+  </div>
+
+  <div class="reset-row">
+    <button class="reset-link" id="resetBtn">Start the deck over</button>
+  </div>
+</div>
+
+<script>
+(function(){
+
+  const questions = [
+    // Wedding & Bachelorette
+    {q:"been to a hen party before today", cat:"Wedding & Bachelorette"},
+    {q:"seen a stripper or naked butler", cat:"Wedding & Bachelorette"},
+    {q:"played bra pong", cat:"Wedding & Bachelorette"},
+    {q:"worn a flower crown", cat:"Wedding & Bachelorette"},
+    {q:"worn a veil", cat:"Wedding & Bachelorette"},
+    {q:"given a speech at a wedding", cat:"Wedding & Bachelorette"},
+    {q:"caught the bouquet", cat:"Wedding & Bachelorette"},
+    {q:"been a bridesmaid", cat:"Wedding & Bachelorette"},
+    {q:"seen someone object to a wedding", cat:"Wedding & Bachelorette"},
+    {q:"crashed a wedding", cat:"Wedding & Bachelorette"},
+    {q:"been to a destination wedding", cat:"Wedding & Bachelorette"},
+    {q:"been to a same-sex wedding", cat:"Wedding & Bachelorette"},
+
+    // Dating & Relationship
+    {q:"fallen in love at first sight", cat:"Dating & Relationship"},
+    {q:"been on a blind date", cat:"Dating & Relationship"},
+    {q:"called a partner an ex's name", cat:"Dating & Relationship"},
+    {q:"pretended a reason to leave a date", cat:"Dating & Relationship"},
+    {q:"had a one-night stand", cat:"Dating & Relationship"},
+    {q:"accidentally said I love you to someone", cat:"Dating & Relationship"},
+    {q:"used a dating app", cat:"Dating & Relationship"},
+    {q:"gone on more than one date in one day", cat:"Dating & Relationship"},
+    {q:"slept with someone on a first date", cat:"Dating & Relationship"},
+
+    // Sexy
+    {q:"used food during sex", cat:"Sexy"},
+    {q:"faked an orgasm", cat:"Sexy"},
+    {q:"been skinny dipping", cat:"Sexy"},
+    {q:"had sex with someone in public", cat:"Sexy"},
+    {q:"had sex with someone in a car", cat:"Sexy"},
+    {q:"kissed someone in public", cat:"Sexy"},
+    {q:"kissed more than 1 person in 24 hours", cat:"Sexy"},
+    {q:"sent a dirty text", cat:"Sexy"},
+    {q:"sent a dirty text to the wrong person", cat:"Sexy"},
+    {q:"watched porn", cat:"Sexy"},
+    {q:"gone down on someone in a cinema", cat:"Sexy"},
+    {q:"flashed someone", cat:"Sexy"},
+    {q:"given a lap dance", cat:"Sexy"},
+    {q:"received a lap dance", cat:"Sexy"},
+    {q:"slept with a co-worker", cat:"Sexy"},
+    {q:"been nude in public", cat:"Sexy"},
+    {q:"had a threesome", cat:"Sexy"},
+    {q:"had a friends-with-benefits arrangement", cat:"Sexy"},
+    {q:"done a sexy roleplay", cat:"Sexy"},
+    {q:"worn someone else's underwear", cat:"Sexy"},
+    {q:"sent a stranger a drink", cat:"Sexy"},
+    {q:"been to a strip club", cat:"Sexy"},
+    {q:"gone commando", cat:"Sexy"},
+    {q:"played strip poker", cat:"Sexy"},
+    {q:"been given a hickey", cat:"Sexy"},
+    {q:"used handcuffs or toys", cat:"Sexy"},
+    {q:"had sex with someone more than 10 years older than me", cat:"Sexy"},
+    {q:"had sex with someone more than 5 years younger than me", cat:"Sexy"},
+
+    // Embarrassing
+    {q:"peed in the shower or pool", cat:"Embarrassing"},
+    {q:"not washed my hands after taking a dump", cat:"Embarrassing"},
+    {q:"gotten a speeding ticket", cat:"Embarrassing"},
+    {q:"been caught picking my nose and eating it", cat:"Embarrassing"},
+    {q:"drunk-dialled someone", cat:"Embarrassing"},
+    {q:"laughed so hard that I weed", cat:"Embarrassing"},
+    {q:"blamed a fart on a pet", cat:"Embarrassing"},
+    {q:"had a negative bank balance", cat:"Embarrassing"},
+    {q:"been arrested", cat:"Embarrassing"},
+    {q:"stolen anything", cat:"Embarrassing"},
+    {q:"wet the bed as an adult", cat:"Embarrassing"},
+    {q:"walked in on my parents", cat:"Embarrassing"},
+    {q:"clogged a toilet", cat:"Embarrassing"},
+    {q:"worn something out of the dirty laundry", cat:"Embarrassing"},
+    {q:"eaten someone else's lunch in the work fridge", cat:"Embarrassing"},
+    {q:"fallen asleep at work", cat:"Embarrassing"},
+    {q:"lied on my resume", cat:"Embarrassing"},
+    {q:"thought a friend's baby was ugly", cat:"Embarrassing"},
+    {q:"eaten insects", cat:"Embarrassing"},
+    {q:"re-gifted something", cat:"Embarrassing"},
+    {q:"flirted with a married person", cat:"Embarrassing"},
+
+    // Tame
+    {q:"broken a bone", cat:"Tame"},
+    {q:"ridden a motorcycle", cat:"Tame"},
+    {q:"dyed my hair", cat:"Tame"},
+    {q:"binged an entire TV show in one day", cat:"Tame"},
+    {q:"marched in a protest", cat:"Tame"},
+    {q:"gotten a tattoo", cat:"Tame"},
+    {q:"ridden a horse", cat:"Tame"},
+    {q:"fired a gun", cat:"Tame"},
+    {q:"run a marathon", cat:"Tame"},
+    {q:"eaten a whole tub of ice cream", cat:"Tame"},
+    {q:"sung karaoke", cat:"Tame"},
+    {q:"sung in public", cat:"Tame"},
+    {q:"gone vegan", cat:"Tame"},
+    {q:"shaved my head", cat:"Tame"},
+    {q:"tried marijuana", cat:"Tame"},
+    {q:"cut my own hair", cat:"Tame"},
+    {q:"met a celebrity", cat:"Tame"},
+    {q:"squirted whipped cream straight into my mouth", cat:"Tame"},
+    {q:"been to a psychic", cat:"Tame"},
+    {q:"played a musical instrument", cat:"Tame"},
+    {q:"been scuba diving", cat:"Tame"},
+    {q:"eaten caviar", cat:"Tame"},
+    {q:"danced on a table", cat:"Tame"},
+
+    // Travel
+    {q:"been on a road trip", cat:"Travel"},
+    {q:"travelled solo", cat:"Travel"},
+    {q:"been to Australia", cat:"Travel"},
+    {q:"travelled in Asia", cat:"Travel"},
+    {q:"stopped by airport security", cat:"Travel"},
+    {q:"gone skiing", cat:"Travel"},
+    {q:"had a passport", cat:"Travel"},
+    {q:"hitchhiked", cat:"Travel"},
+    {q:"learned a foreign language", cat:"Travel"},
+
+    // Themed & Pop Culture
+    {q:"been to a Disney theme park", cat:"Pop Culture"},
+    {q:"thought a cartoon character was hot", cat:"Pop Culture"},
+    {q:"read the Harry Potter books", cat:"Pop Culture"},
+
+    // Extreme / Rare
+    {q:"won the lottery", cat:"Extreme / Rare"},
+    {q:"saved a life", cat:"Extreme / Rare"},
+    {q:"been on TV", cat:"Extreme / Rare"},
+    {q:"donated an organ", cat:"Extreme / Rare"},
+
+    // Universal
+    {q:"eaten an entire pizza by myself", cat:"Universal"},
+    {q:"farted in front of a significant other", cat:"Universal"},
+
+    // Spicy / Risky
+    {q:"cheated on someone", cat:"Spicy / Risky"},
+    {q:"slept with a friend's ex", cat:"Spicy / Risky"},
+    {q:"been the alibi for a lying friend", cat:"Spicy / Risky"},
+    {q:"told someone I love them without meaning it", cat:"Spicy / Risky"},
+    {q:"convinced a friend to dump someone", cat:"Spicy / Risky"},
+    {q:"seen someone die", cat:"Spicy / Risky"},
+    {q:"regretted getting married", cat:"Spicy / Risky"},
+    {q:"wished I didn't have kids", cat:"Spicy / Risky"},
+    {q:"run for my life", cat:"Spicy / Risky"},
+
+    // Daily Life & Habits
+    {q:"walked into a glass door or window", cat:"Daily Life"},
+    {q:"waved back at a stranger thinking they knew me", cat:"Daily Life"},
+    {q:"practiced an argument in front of the mirror", cat:"Daily Life"},
+    {q:"spent more than an hour scrolling through streaming menus without watching anything", cat:"Daily Life"},
+    {q:"fallen asleep in a movie theater", cat:"Daily Life"},
+    {q:"tried to cut my own bangs and regretted it", cat:"Daily Life"},
+    {q:"walked out of a public restroom with toilet paper stuck to my shoe", cat:"Daily Life"},
+    {q:"used a fake name at a coffee shop", cat:"Daily Life"},
+    {q:"talked to a pet as if they were a human adult", cat:"Daily Life"},
+    {q:"eaten dry cereal straight out of the box with my hands", cat:"Daily Life"},
+    {q:"left the house with two different shoes on", cat:"Daily Life"},
+    {q:"forgotten why I walked into a room", cat:"Daily Life"},
+    {q:"spent way too much money on something completely useless online at 3 AM", cat:"Daily Life"},
+    {q:"tried to look cool in front of a crush and completely embarrassed myself", cat:"Daily Life"},
+    {q:"blamed a smell on someone else when it was actually me", cat:"Daily Life"},
+
+    // Travel & Adventure
+    {q:"missed a flight or a train", cat:"Travel & Adventure"},
+    {q:"lost my luggage while traveling", cat:"Travel & Adventure"},
+    {q:"slept in an airport terminal overnight", cat:"Travel & Adventure"},
+    {q:"fallen asleep on public transit and missed my stop", cat:"Travel & Adventure"},
+    {q:"accidentally walked into the wrong hotel room", cat:"Travel & Adventure"},
+    {q:"tried street food that made me violently ill", cat:"Travel & Adventure"},
+    {q:"gotten completely lost without a phone or map", cat:"Travel & Adventure"},
+    {q:"snuck food or drinks into a movie theater", cat:"Travel & Adventure"},
+    {q:"gone camping and regretted every second of it", cat:"Travel & Adventure"},
+    {q:"accidentally packed way too many clothes and worn only three outfits the whole trip", cat:"Travel & Adventure"},
+
+    // Food & Drink
+    {q:"bitten into a piece of fruit and found a bug inside", cat:"Food & Drink"},
+    {q:"eaten food off the floor (the 5-second rule)", cat:"Food & Drink"},
+    {q:"pretended to like a dish someone cooked for me just to be polite", cat:"Food & Drink"},
+    {q:"burned water or a pot of instant noodles", cat:"Food & Drink"},
+    {q:"eaten an entire jar of Nutella or peanut butter with a spoon", cat:"Food & Drink"},
+    {q:"tried to drink hot coffee or tea way too fast and burned my tongue off", cat:"Food & Drink"},
+    {q:"ordered something off a menu entirely because it had a cool name", cat:"Food & Drink"},
+    {q:"dropped food on my shirt within five minutes of putting it on", cat:"Food & Drink"},
+    {q:"put pineapple on pizza", cat:"Food & Drink"},
+    {q:"eaten raw cookie dough despite the warnings", cat:"Food & Drink"},
+
+    // Social & Awkward Moments
+    {q:"replied \"You too\" when a waiter said \"Enjoy your meal\"", cat:"Social & Awkward"},
+    {q:"practiced what to say before making a phone call", cat:"Social & Awkward"},
+    {q:"accidentally replied \"Love you\" to a boss or business contact", cat:"Social & Awkward"},
+    {q:"laughed at a joke I completely didn't understand", cat:"Social & Awkward"},
+    {q:"sent a text meant for my friend to the person we were gossiping about", cat:"Social & Awkward"},
+    {q:"pretended to be on my phone to avoid talking to someone in public", cat:"Social & Awkward"},
+    {q:"forgot someone's name right after they introduced themselves", cat:"Social & Awkward"},
+    {q:"waved at someone who wasn't waving at me", cat:"Social & Awkward"},
+    {q:"tripped over absolutely nothing on a flat sidewalk", cat:"Social & Awkward"},
+    {q:"tried to open a \"Pull\" door by pushing it hard", cat:"Social & Awkward"},
+
+    // Mischief & Workplace Fun
+    {q:"pulled a prank on a coworker", cat:"Mischief & Work"},
+    {q:"played video games for more than 12 hours straight", cat:"Mischief & Work"},
+    {q:"skipped a workout because I put my gym clothes on and decided it was too much effort", cat:"Mischief & Work"},
+    {q:"faked being sick to get out of a social event", cat:"Mischief & Work"},
+    {q:"eavesdropped on a dramatic conversation in public", cat:"Mischief & Work"},
+    {q:"used a Wikipedia page as my only source for a major project", cat:"Mischief & Work"},
+    {q:"snooped through someone else's medicine cabinet at a party", cat:"Mischief & Work"},
+    {q:"tried to look up my own name on Google", cat:"Mischief & Work"},
+    {q:"sent a message to the group chat by accident instead of a private chat", cat:"Mischief & Work"},
+    {q:"pretended to understand a complex movie just to fit in", cat:"Mischief & Work"},
+
+    // Wild & Adventurous
+    {q:"jumped out of an airplane or bungee jumped", cat:"Wild & Adventurous"},
+    {q:"run away from a swarm of bees or wasps", cat:"Wild & Adventurous"},
+    {q:"tried to surf and immediately wiped out", cat:"Wild & Adventurous"},
+    {q:"driven a car without a valid license (even briefly)", cat:"Wild & Adventurous"},
+    {q:"climbed a tree and gotten stuck", cat:"Wild & Adventurous"},
+    {q:"snuck out of a house as a teenager", cat:"Wild & Adventurous"},
+    {q:"hitchhiked or picked up a random hitchhiker", cat:"Wild & Adventurous"},
+    {q:"stayed up for 24 hours straight just because I could", cat:"Wild & Adventurous"},
+    {q:"swam with sharks or stingrays", cat:"Wild & Adventurous"},
+    {q:"broken into a private property or pool after hours", cat:"Wild & Adventurous"},
+
+    // Quirky & Random
+    {q:"tried to communicate with an animal using animal noises", cat:"Quirky & Random"},
+    {q:"built an elaborate fort out of blankets and pillows as an adult", cat:"Quirky & Random"},
+    {q:"bought a houseplant and watched it die within a month", cat:"Quirky & Random"},
+    {q:"spent way too much time organizing an app layout on my phone", cat:"Quirky & Random"},
+    {q:"tried a crazy internet beauty trend that went terribly wrong", cat:"Quirky & Random"},
+    {q:"spent hours watching ridiculous internet tutorials for things I'll never do", cat:"Quirky & Random"},
+    {q:"tried to fold a fitted sheet and given up into a giant ball", cat:"Quirky & Random"},
+    {q:"worn mismatched socks on purpose just to feel rebellious", cat:"Quirky & Random"},
+    {q:"talked out loud to fictional characters while reading a book or watching a show", cat:"Quirky & Random"},
+    {q:"tried to catch falling rain or snowflakes in my mouth", cat:"Quirky & Random"},
+    {q:"spent an embarrassing amount of time picking out a profile picture", cat:"Quirky & Random"},
+    {q:"looked into a mirror and practiced making scary faces", cat:"Quirky & Random"},
+    {q:"tried to juggle and dropped everything immediately", cat:"Quirky & Random"},
+    {q:"panic-cleaned my entire house because one unexpected guest was coming over", cat:"Quirky & Random"},
+    {q:"read the terms and conditions all the way through", cat:"Quirky & Random"},
+
+    // Wholesome
+    {q:"cried happy tears at a movie", cat:"Wholesome"},
+    {q:"hugged a total stranger", cat:"Wholesome"},
+    {q:"left a surprise note for someone", cat:"Wholesome"},
+    {q:"paid for a stranger's coffee", cat:"Wholesome"},
+    {q:"helped someone carry heavy groceries", cat:"Wholesome"},
+    {q:"adopted a pet from a shelter", cat:"Wholesome"},
+    {q:"written a thank-you letter", cat:"Wholesome"},
+    {q:"called a grandparent just to chat", cat:"Wholesome"},
+    {q:"given up my seat on public transport", cat:"Wholesome"},
+    {q:"baked something for a neighbor", cat:"Wholesome"},
+    {q:"reunited with an old friend by chance", cat:"Wholesome"},
+    {q:"helped a stranger find directions", cat:"Wholesome"},
+    {q:"cheered up a crying kid", cat:"Wholesome"},
+    {q:"planted a tree", cat:"Wholesome"},
+    {q:"donated blood", cat:"Wholesome"},
+    {q:"volunteered at a charity event", cat:"Wholesome"},
+    {q:"taught someone something new for free", cat:"Wholesome"},
+    {q:"rescued an animal", cat:"Wholesome"},
+    {q:"sent flowers to someone for no reason", cat:"Wholesome"},
+    {q:"complimented a stranger's outfit", cat:"Wholesome"},
+    {q:"saved a bug from drowning", cat:"Wholesome"},
+    {q:"left a generous tip", cat:"Wholesome"},
+    {q:"returned a lost wallet", cat:"Wholesome"},
+    {q:"forgiven someone who really hurt me", cat:"Wholesome"},
+    {q:"told a friend how much they mean to me", cat:"Wholesome"},
+    {q:"surprised someone with their favorite meal", cat:"Wholesome"},
+    {q:"helped a friend move apartments", cat:"Wholesome"},
+    {q:"babysat for free", cat:"Wholesome"},
+    {q:"shoveled a neighbor's driveway", cat:"Wholesome"},
+    {q:"brought soup to a sick friend", cat:"Wholesome"},
+    {q:"stayed on the phone all night to comfort a friend", cat:"Wholesome"},
+    {q:"organized a surprise party", cat:"Wholesome"},
+    {q:"learned sign language to talk to someone", cat:"Wholesome"},
+    {q:"picked up litter that wasn't mine", cat:"Wholesome"},
+    {q:"let someone go ahead of me in line", cat:"Wholesome"},
+    {q:"written a letter to my future self", cat:"Wholesome"},
+    {q:"reconnected with a childhood friend online", cat:"Wholesome"},
+    {q:"cried during a Pixar movie", cat:"Wholesome"},
+    {q:"given my umbrella to a stranger in the rain", cat:"Wholesome"},
+    {q:"helped a lost tourist", cat:"Wholesome"},
+    {q:"supported a friend through a breakup at 3am", cat:"Wholesome"},
+    {q:"clapped for a stranger's achievement", cat:"Wholesome"},
+    {q:"paid off part of a stranger's bill", cat:"Wholesome"},
+    {q:"sung happy birthday to a stranger", cat:"Wholesome"},
+    {q:"given a compliment that made someone's whole day", cat:"Wholesome"},
+    {q:"hand-made a gift for someone", cat:"Wholesome"},
+    {q:"stood up for someone being bullied", cat:"Wholesome"},
+    {q:"left an encouraging comment for a stranger online", cat:"Wholesome"},
+    {q:"kept a promise I really didn't want to keep", cat:"Wholesome"},
+    {q:"told someone I was proud of them", cat:"Wholesome"},
+
+    // Funny
+    {q:"laughed so hard no sound came out", cat:"Funny"},
+    {q:"gotten the hiccups at the worst possible time", cat:"Funny"},
+    {q:"answered a video call still half asleep", cat:"Funny"},
+    {q:"sneezed so hard I scared myself", cat:"Funny"},
+    {q:"tried to wink and both eyes closed", cat:"Funny"},
+    {q:"said \"you too\" after buying movie tickets", cat:"Funny"},
+    {q:"laughed at my own joke before finishing it", cat:"Funny"},
+    {q:"gotten stuck in a onesie", cat:"Funny"},
+    {q:"done an over-the-top double take like in a sitcom", cat:"Funny"},
+    {q:"tripped going up the stairs, not down", cat:"Funny"},
+    {q:"accidentally liked a really old photo while stalking someone's profile", cat:"Funny"},
+    {q:"sent a voice message and hated the sound of my own voice", cat:"Funny"},
+    {q:"pretended to know a song's lyrics and mumbled through it", cat:"Funny"},
+    {q:"done the awkward side-to-side sidewalk dance with a stranger", cat:"Funny"},
+    {q:"answered \"good, you?\" to someone who didn't ask how I was", cat:"Funny"},
+    {q:"laughed at completely the wrong moment", cat:"Funny"},
+    {q:"tried to discreetly smell my own armpit in public", cat:"Funny"},
+    {q:"gotten a song stuck in someone else's head on purpose", cat:"Funny"},
+    {q:"done a victory dance and immediately regretted it", cat:"Funny"},
+    {q:"mispronounced a word my entire life until someone corrected me", cat:"Funny"},
+    {q:"clapped at the wrong moment in a movie theater", cat:"Funny"},
+    {q:"accidentally called a teacher \"mom\" or \"dad\"", cat:"Funny"},
+    {q:"laughed while trying to be serious in an important meeting", cat:"Funny"},
+    {q:"tried to open a car door that wasn't mine", cat:"Funny"},
+    {q:"said \"bless you\" to a stranger's cough, not a sneeze", cat:"Funny"},
+    {q:"done an impression that offended no one but made everyone laugh", cat:"Funny"},
+    {q:"gotten caught talking to myself in public", cat:"Funny"},
+    {q:"done a full-body flinch at a jump scare in front of others", cat:"Funny"},
+    {q:"pretended to text to avoid an awkward conversation", cat:"Funny"},
+    {q:"laughed so hard I snorted", cat:"Funny"},
+    {q:"done a dramatic slow-motion fall", cat:"Funny"},
+    {q:"tried to high-five someone who left me hanging", cat:"Funny"},
+    {q:"sung the wrong lyrics confidently for years", cat:"Funny"},
+    {q:"accidentally sent a meme to a work group chat", cat:"Funny"},
+    {q:"made a weird noise trying to lift something heavy", cat:"Funny"},
+    {q:"done an exaggerated \"who, me?\" face when caught", cat:"Funny"},
+    {q:"laughed at my own reflection for no reason", cat:"Funny"},
+    {q:"gotten my sleeve caught on a doorknob", cat:"Funny"},
+    {q:"done a random dance move when a good song came on in public", cat:"Funny"},
+    {q:"tried to act natural after tripping over nothing", cat:"Funny"},
+    {q:"made eye contact with someone across the room and immediately regretted it", cat:"Funny"},
+    {q:"done a really bad celebrity impression on purpose", cat:"Funny"},
+    {q:"accidentally texted the wrong group chat something embarrassing", cat:"Funny"},
+    {q:"laughed at my own cooking disaster", cat:"Funny"},
+    {q:"done a spit-take", cat:"Funny"},
+    {q:"pretended to laugh at a joke I didn't actually hear", cat:"Funny"},
+    {q:"gotten caught singing in the car at a red light", cat:"Funny"},
+    {q:"done an ugly cry during a commercial", cat:"Funny"},
+    {q:"tried to look busy when a boss walked by", cat:"Funny"},
+    {q:"done a happy dance in the kitchen alone", cat:"Funny"}
+  ];
+
+  const TOTAL = questions.length;
+
+  // State: indices not yet "asked" (confirmed via Next). Passed questions go
+  // back into this pool so they can come up again.
+  let pool = [];
+  let currentIndex = null; // index into `questions`
+  let askedCount = 0;
+
+  const els = {
+    card: document.getElementById('card'),
+    category: document.getElementById('category'),
+    question: document.getElementById('question'),
+    counter: document.getElementById('counter'),
+    hint: document.getElementById('hint'),
+    passBtn: document.getElementById('passBtn'),
+    nextBtn: document.getElementById('nextBtn'),
+    progressFill: document.getElementById('progressFill'),
+    progressLabel: document.getElementById('progressLabel'),
+    resetBtn: document.getElementById('resetBtn'),
+  };
+
+  function shuffle(arr){
+    for(let i = arr.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function initGame(){
+    pool = shuffle(questions.map((_, i) => i));
+    askedCount = 0;
+    currentIndex = null;
+    updateProgress();
+    drawNext({animate:false});
+  }
+
+  // Pull a random question from the pool, avoiding an immediate repeat of
+  // the current one when other options exist.
+  function pickFromPool(avoidIndex){
+    if(pool.length === 0) return null;
+    if(pool.length === 1) return pool[0];
+
+    let choiceSlot = Math.floor(Math.random() * pool.length);
+    if(pool[choiceSlot] === avoidIndex){
+      choiceSlot = (choiceSlot + 1) % pool.length;
+    }
+    const idx = pool[choiceSlot];
+    pool.splice(choiceSlot, 1);
+    return idx;
+  }
+
+  function updateProgress(){
+    const pct = Math.round((askedCount / TOTAL) * 100);
+    els.progressFill.style.width = pct + '%';
+    els.progressLabel.textContent = askedCount + ' / ' + TOTAL + ' asked';
+    els.counter.textContent = (TOTAL - pool.length) + ' seen';
+  }
+
+  function renderCard(idx){
+    const item = questions[idx];
+    els.category.textContent = item.cat;
+    els.question.textContent = item.q;
+  }
+
+  function drawNext({animate}){
+    const nextIdx = pickFromPool(currentIndex);
+
+    if(nextIdx === null){
+      showEmptyState();
+      return;
+    }
+
+    currentIndex = nextIdx;
+    renderCard(currentIndex);
+    updateProgress();
+
+    if(animate){
+      els.card.classList.remove('enter');
+      void els.card.offsetWidth; // restart animation
+      els.card.classList.add('enter');
+    }
+  }
+
+  function showEmptyState(){
+    els.category.textContent = 'All done';
+    els.question.textContent = "You've made it through the whole deck! Shuffle again to keep the night going.";
+    els.hint.textContent = 'Tap "Start the deck over" below to reset.';
+    els.counter.textContent = TOTAL + ' / ' + TOTAL;
+    els.passBtn.disabled = true;
+    els.nextBtn.disabled = true;
+    els.passBtn.style.opacity = 0.5;
+    els.nextBtn.style.opacity = 0.5;
+  }
+
+  function handleNext(){
+    if(currentIndex === null) return;
+    askedCount += 1;
+    animateExit('exit-next', () => drawNext({animate:true}));
+  }
+
+  function handlePass(){
+    if(currentIndex === null) return;
+    // Put the current question back into the pool so it can be asked again.
+    pool.push(currentIndex);
+    animateExit('exit-pass', () => drawNext({animate:true}));
+  }
+
+  function animateExit(cls, onDone){
+    els.card.classList.add(cls);
+    setTimeout(() => {
+      els.card.classList.remove(cls);
+      onDone();
+    }, 220);
+  }
+
+  function resetAll(){
+    els.passBtn.disabled = false;
+    els.nextBtn.disabled = false;
+    els.passBtn.style.opacity = 1;
+    els.nextBtn.style.opacity = 1;
+    els.hint.textContent = "Done it? Sip up. Pass if it's not for you.";
+    initGame();
+  }
+
+  els.nextBtn.addEventListener('click', handleNext);
+  els.passBtn.addEventListener('click', handlePass);
+  els.resetBtn.addEventListener('click', resetAll);
+
+  // Ambient confetti
+  (function confettiField(){
+    const field = document.getElementById('confetti');
+    const colors = ['#ff4d94', '#ffc857', '#8a5cf6', '#f6efe8'];
+    const count = 18;
+    for(let i = 0; i < count; i++){
+      const s = document.createElement('span');
+      const size = 4 + Math.random() * 5;
+      s.style.width = size + 'px';
+      s.style.height = size + 'px';
+      s.style.left = Math.random() * 100 + 'vw';
+      s.style.top = (Math.random() * -100) + 'vh';
+      s.style.background = colors[i % colors.length];
+      s.style.animationDuration = (10 + Math.random() * 10) + 's';
+      s.style.animationDelay = (Math.random() * -12) + 's';
+      field.appendChild(s);
+    }
+  })();
+
+  initGame();
+})();
+</script>
+</body>
+</html>
